@@ -15,7 +15,9 @@ package telegram
 
 import (
 	"context"
+	"io/ioutil"
 	"net/http"
+	"strings"
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
@@ -42,6 +44,15 @@ func New(conf *config.TelegramConfig, t *template.Template, l log.Logger, httpOp
 	httpclient, err := commoncfg.NewClientFromConfig(*conf.HTTPConfig, "telegram", httpOpts...)
 	if err != nil {
 		return nil, err
+	}
+
+	if conf.BotToken == "" {
+		tokenFile, err := ioutil.ReadFile(conf.BotTokenFile)
+		if err != nil {
+			return nil, err
+		}
+
+		conf.BotToken = config.Secret(strings.TrimSpace(string(tokenFile)))
 	}
 
 	client, err := createTelegramClient(conf.BotToken, conf.APIUrl.String(), conf.ParseMode, httpclient)
